@@ -13,5 +13,6 @@ rules:
 flags:
   - `-r=2`: area around every point to get its sharp value
 
-One can simply run this project by typing `go build main.go -r 5 wine`.
-You have to install Go 1.4 previously of couse.
+One can simply run this project by typing `go run main.go -r 5 wine` or `go build; ./imdepth -r 5 wine`.
+
+You have to install Go 1.4 first.
