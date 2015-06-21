@@ -1,20 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"os"
+	"fmt"
 	"image"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
-	"path/filepath"
 
 	"image/color"
-	"image/png"
-	_ "image/jpeg" // register the JPEG format with the image package
 	_ "image/gif"  // register the GIF format with the image package
+	_ "image/jpeg" // register the JPEG format with the image package
+	"image/png"
 )
 
 var area = flag.Int("r", 2, "area around every point to get its sharp value")
@@ -53,7 +53,7 @@ func main() {
 	}
 	for _, f := range files {
 		if !regFile.MatchString(f.Name()) {
-			continue;
+			continue
 		}
 
 		// open image
@@ -72,11 +72,11 @@ func main() {
 			log.Fatal(err)
 		}
 		bounds := im.Bounds()
-		w, h := bounds.Max.X - bounds.Min.X, bounds.Max.Y - bounds.Min.Y
-		if (width != 0 && width != w) {
+		w, h := bounds.Max.X-bounds.Min.X, bounds.Max.Y-bounds.Min.Y
+		if width != 0 && width != w {
 			log.Fatalf("width not matched: got %d, expect %d", w, width)
 		}
-		if (height != 0 && height != h) {
+		if height != 0 && height != h {
 			log.Fatalf("height not matched: got %d, expect %d", h, height)
 		}
 		width, height = w, h
@@ -85,7 +85,7 @@ func main() {
 		imgs[level] = make([]uint8, w*h)
 		for c := 0; c < w; c++ {
 			for r := 0; r < h; r++ {
-				imgs[level][c*h + r] = color.GrayModel.Convert(im.At(c, r)).(color.Gray).Y
+				imgs[level][c*h+r] = color.GrayModel.Convert(im.At(c, r)).(color.Gray).Y
 			}
 		}
 
@@ -107,7 +107,7 @@ func main() {
 			}
 			gray.Set(c, r, color.Gray{max_l})
 		}
-		if c % 10 == 0 {
+		if c%10 == 0 {
 			fmt.Printf(".")
 		}
 	}
@@ -122,18 +122,18 @@ func main() {
 
 func disp(img []uint8, col, row, width, height int) float64 {
 	var (
-		n int
+		n     int
 		x, x2 float64
 	)
-	for c := col - *area; c < col + *area; c++ {
-		for r := row - *area; r < row + *area; r++ {
-			if (c < 0 || c >= width || r < 0 || r >= height || (col - c)*(col - c) + (row - r)*(row - r) > *area**area) {
+	for c := col - *area; c < col+*area; c++ {
+		for r := row - *area; r < row+*area; r++ {
+			if c < 0 || c >= width || r < 0 || r >= height || (col-c)*(col-c)+(row-r)*(row-r) > *area**area {
 				continue
 			}
 			n += 1
-			x += float64(img[c*height + r])
-			x2 += float64(img[c*height + r])*float64(img[c*height + r])
+			x += float64(img[c*height+r])
+			x2 += float64(img[c*height+r]) * float64(img[c*height+r])
 		}
 	}
-	return x2 / float64(n) - (x / float64(n))*(x / float64(n))
+	return x2/float64(n) - (x/float64(n))*(x/float64(n))
 }
