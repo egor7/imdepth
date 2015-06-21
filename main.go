@@ -59,20 +59,19 @@ func main() {
 		// open image
 		levels += 1
 		level, _ := strconv.Atoi(regLvl.FindString(f.Name()))
-		im, err := os.Open(filepath.Join(args[0], f.Name()))
+		imf, err := os.Open(filepath.Join(args[0], f.Name()))
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer im.Close()
+		defer imf.Close()
+		fmt.Printf("read %s\n", imf.Name())
 
-		// read image
-		body, _, err := image.Decode(im)
+		// read image size
+		im, _, err := image.Decode(imf)
 		if err != nil {
 			log.Fatal(err)
 		}
-		bounds := body.Bounds()
-		fmt.Printf("read %s\n", im.Name())
-
+		bounds := im.Bounds()
 		w, h := bounds.Max.X - bounds.Min.X, bounds.Max.Y - bounds.Min.Y
 		if (width != 0 && width != w) {
 			log.Fatalf("width not matched: got %d, expect %d", w, width)
@@ -82,11 +81,11 @@ func main() {
 		}
 		width, height = w, h
 
-		// save image
+		// read image data
 		imgs[level] = make([]uint8, w*h)
 		for c := 0; c < w; c++ {
 			for r := 0; r < h; r++ {
-				imgs[level][c*h + r] = color.GrayModel.Convert(body.At(c, r)).(color.Gray).Y
+				imgs[level][c*h + r] = color.GrayModel.Convert(im.At(c, r)).(color.Gray).Y
 			}
 		}
 
@@ -124,7 +123,7 @@ func main() {
 func disp(img []uint8, col, row, width, height int) float64 {
 	var (
 		n int
-		med, disp float64
+		x, x2 float64
 	)
 	for c := col - *area; c < col + *area; c++ {
 		for r := row - *area; r < row + *area; r++ {
@@ -132,21 +131,9 @@ func disp(img []uint8, col, row, width, height int) float64 {
 				continue
 			}
 			n += 1
-			med += float64(img[c*height + r])
+			x += float64(img[c*height + r])
+			x2 += float64(img[c*height + r])*float64(img[c*height + r])
 		}
 	}
-	med /= float64(n)
-
-	for c := col - *area; c < col + *area; c++ {
-		for r := row - *area; r < row + *area; r++ {
-			if (c < 0 || c >= width || r < 0 || r >= height || (col - c)*(col - c) + (row - r)*(row - r) > *area**area) {
-				continue
-			}
-			diff := float64(img[c*height + r]) - med
-			disp += diff*diff
-		}
-	}
-	disp /= float64(n - 1)
-
-	return disp
+	return x2 / float64(n) - (x / float64(n))*(x / float64(n))
 }
