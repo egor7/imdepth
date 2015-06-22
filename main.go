@@ -93,19 +93,21 @@ func main() {
 
 	// process
 	fmt.Printf("processing %d images [%dx%d]: ", levels, width, height)
-	gray := image.NewGray(image.Rect(0, 0, width, height))
+	im_heights := image.NewGray(image.Rect(0, 0, width, height))
+	im_mesh := image.NewGray(image.Rect(0, 0, width, height))
 	for c := 0; c < width; c++ {
 		for r := 0; r < height; r++ {
 			var max float64
-			var max_l uint8
+			var max_l int
 			for l, _ := range imgs {
 				d := disp(imgs[l], c, r, width, height)
 				if d >= max {
 					max = d
-					max_l = uint8(l)
+					max_l = l
 				}
 			}
-			gray.Set(c, r, color.Gray{max_l})
+			im_heights.Set(c, r, color.Gray{uint8(max_l)})
+			im_mesh.Set(c, r, color.Gray{imgs[max_l][c*height+r]})
 		}
 		if c%10 == 0 {
 			fmt.Printf(".")
@@ -113,11 +115,17 @@ func main() {
 	}
 	fmt.Printf(" DONE\n")
 
-	// save
-	outfile, err := os.Create(filepath.Join(args[0], "result.png"))
-	defer outfile.Close()
-	png.Encode(outfile, gray)
-	fmt.Printf("save %s\n", outfile.Name())
+	// save heights
+	heights, err := os.Create(filepath.Join(args[0], "heights.png"))
+	defer heights.Close()
+	png.Encode(heights, im_heights)
+	fmt.Printf("save %s\n", heights.Name())
+
+	// save mesh
+	mesh, err := os.Create(filepath.Join(args[0], "mesh.png"))
+	defer mesh.Close()
+	png.Encode(mesh, im_mesh)
+	fmt.Printf("save %s\n", mesh.Name())
 }
 
 func disp(img []uint8, col, row, width, height int) float64 {
@@ -128,11 +136,12 @@ func disp(img []uint8, col, row, width, height int) float64 {
 	for c := col - *area; c < col+*area; c++ {
 		for r := row - *area; r < row+*area; r++ {
 			if c < 0 || c >= width || r < 0 || r >= height || (col-c)*(col-c)+(row-r)*(row-r) > *area**area {
-				continue
+				// continue
+			} else {
+				n += 1
+				x += float64(img[c*height+r])
+				x2 += float64(img[c*height+r]) * float64(img[c*height+r])
 			}
-			n += 1
-			x += float64(img[c*height+r])
-			x2 += float64(img[c*height+r]) * float64(img[c*height+r])
 		}
 	}
 	return x2/float64(n) - (x/float64(n))*(x/float64(n))
