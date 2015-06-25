@@ -44,7 +44,7 @@ func main() {
 	}
 
 	var levels, width, height int
-	imgs := make(map[int][]uint8)
+	imgs := make(map[int][]color.Color)
 
 	// loop throug dir
 	files, err := ioutil.ReadDir(args[0])
@@ -82,10 +82,10 @@ func main() {
 		width, height = w, h
 
 		// read image data
-		imgs[level] = make([]uint8, w*h)
+		imgs[level] = make([]color.Color, w*h)
 		for c := 0; c < w; c++ {
 			for r := 0; r < h; r++ {
-				imgs[level][c*h+r] = color.GrayModel.Convert(im.At(c, r)).(color.Gray).Y
+				imgs[level][c*h+r] = im.At(c, r)
 			}
 		}
 
@@ -94,7 +94,7 @@ func main() {
 	// process
 	fmt.Printf("processing %d images [%dx%d]: ", levels, width, height)
 	im_heights := image.NewGray(image.Rect(0, 0, width, height))
-	im_mesh := image.NewGray(image.Rect(0, 0, width, height))
+	im_mesh := image.NewRGBA(image.Rect(0, 0, width, height))
 	for c := 0; c < width; c++ {
 		for r := 0; r < height; r++ {
 			var max float64
@@ -107,7 +107,7 @@ func main() {
 				}
 			}
 			im_heights.Set(c, r, color.Gray{uint8(max_l)})
-			im_mesh.Set(c, r, color.Gray{imgs[max_l][c*height+r]})
+			im_mesh.Set(c, r, imgs[max_l][c*height+r])
 		}
 		if c%10 == 0 {
 			fmt.Printf(".")
@@ -116,19 +116,19 @@ func main() {
 	fmt.Printf(" DONE\n")
 
 	// save heights
-	heights, err := os.Create(filepath.Join(args[0], "heights.png"))
+	heights, err := os.Create(filepath.Join(args[0], fmt.Sprintf("heights-%d.png", *area)))
 	defer heights.Close()
 	png.Encode(heights, im_heights)
 	fmt.Printf("save %s\n", heights.Name())
 
 	// save mesh
-	mesh, err := os.Create(filepath.Join(args[0], "mesh.png"))
+	mesh, err := os.Create(filepath.Join(args[0], fmt.Sprintf("mesh-%d.png", *area)))
 	defer mesh.Close()
 	png.Encode(mesh, im_mesh)
 	fmt.Printf("save %s\n", mesh.Name())
 }
 
-func disp(img []uint8, col, row, width, height int) float64 {
+func disp(img []color.Color, col, row, width, height int) float64 {
 	var (
 		n     int
 		x, x2 float64
@@ -139,10 +139,11 @@ func disp(img []uint8, col, row, width, height int) float64 {
 				// continue
 			} else {
 				n += 1
-				x += float64(img[c*height+r])
-				x2 += float64(img[c*height+r]) * float64(img[c*height+r])
+				gray := float64(color.GrayModel.Convert(img[c*height+r]).(color.Gray).Y)
+				x += gray
+				x2 += gray*gray
 			}
 		}
 	}
-	return x2/float64(n) - (x/float64(n))*(x/float64(n))
+	return float64(n)*x2/(x*x) - 1
 }

@@ -6,9 +6,11 @@
 ehthumbs.db
 Thumbs.db
 
+items/
 micro/
 micro2/
 micro3/
 clocks/
 .dir-locals.el
 imdepth
+imdepth.exe
