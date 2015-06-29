@@ -116,13 +116,13 @@ func main() {
 	fmt.Printf(" DONE\n")
 
 	// save heights
-	heights, err := os.Create(filepath.Join(args[0], fmt.Sprintf("heights-%d.png", *area)))
+	heights, err := os.Create(filepath.Join(args[0], fmt.Sprintf("heights.png")))
 	defer heights.Close()
 	png.Encode(heights, im_heights)
 	fmt.Printf("save %s\n", heights.Name())
 
 	// save mesh
-	mesh, err := os.Create(filepath.Join(args[0], fmt.Sprintf("mesh-%d.png", *area)))
+	mesh, err := os.Create(filepath.Join(args[0], fmt.Sprintf("colors.png")))
 	defer mesh.Close()
 	png.Encode(mesh, im_mesh)
 	fmt.Printf("save %s\n", mesh.Name())
